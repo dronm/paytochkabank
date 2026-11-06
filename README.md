@@ -10,8 +10,9 @@ Requires Go 1.22 or newer. Uses only the Go standard library.
 
 | Service | Operations |
 | --- | --- |
-| `client.Acquiring` | Create a card-only hosted checkout, retrieve payment state, request a refund |
-| `client.SBP` | Create a single-use dynamic QR, retrieve QR status and historical payments, request and track a refund |
+| `client` | List companies and individuals visible to the JWT |
+| `client.Acquiring` | List acquiring outlets, create a card-only hosted checkout, retrieve payment state, request a refund |
+| `client.SBP` | Look up registration and list outlets, create a single-use dynamic QR, retrieve QR status and historical payments, request and track a refund |
 | `WebhookVerifier` | Verify raw RS256 JWT notifications and decode acquiring or СБП events |
 
 Fiscal receipts, idempotency, database models, HTTP handlers, order transitions, refund permissions, and reconciliation scheduling belong to the application. The package does not collect card details, poll automatically, or retry financial writes.
@@ -57,6 +58,17 @@ This draft expects you to configure identifiers obtained during bank setup:
 - СБП refunds: `BankCode` and `AccountCode` for your company's account.
 
 **Acquiring and СБП merchant IDs are different identifiers.** Internet acquiring must be enabled, and the company and merchant must be registered for direct СБП. Merchant-registration and account-discovery APIs are outside this draft.
+
+## Look up company and merchant IDs
+
+| Method | Result |
+| --- | --- |
+| `client.ListCustomers(ctx)` | Customer records visible to the JWT. Use a `Business` record's `CustomerCode`. |
+| `client.SBP.GetCustomerInfo(ctx, customerCode, bankCode)` | The company's СБП registration, including its `LegalID`. |
+| `client.SBP.ListMerchants(ctx, legalID)` | The legal entity's СБП outlets and QR capabilities. |
+| `client.Acquiring.ListRetailers(ctx, customerCode)` | The company's internet-acquiring outlets and payment modes. |
+
+These methods perform read-only requests. Selecting a company or an eligible outlet is the application's responsibility.
 
 ## Exact monetary amounts
 
